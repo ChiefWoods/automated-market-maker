@@ -18,12 +18,12 @@ pub struct Swap<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
     #[account(
-        has_one = mint_x,
-        has_one = mint_y,
-        seeds = [CONFIG_SEED, config.seed.to_le_bytes().as_ref()],
-        bump = config.bump,
+        // has_one = mint_x,
+        // has_one = mint_y,
+        // seeds = [CONFIG_SEED, config.seed.to_le_bytes().as_ref()],
+        // bump = config.bump,
     )]
-    pub config: Account<'info, Config>,
+    pub config: AccountLoader<'info, Config>,
     #[account(mint::token_program = token_program)]
     pub mint_x: Box<InterfaceAccount<'info, Mint>>,
     #[account(mint::token_program = token_program)]
@@ -65,14 +65,16 @@ pub struct Swap<'info> {
 
 impl<'info> Swap<'info> {
     pub fn swap(&self, args: SwapArgs) -> Result<()> {
-        self.config.invariant()?;
+        // self.config.invariant()?;
         require_gt!(args.amount, 0, AMMError::InvalidAmount);
+
+        let config = self.config.load()?;
 
         let mut curve = ConstantProduct::init(
             self.vault_x.amount,
             self.vault_y.amount,
             self.vault_x.amount,
-            self.config.fee,
+            config.fee,
             None,
         )
         .unwrap();
@@ -131,11 +133,8 @@ impl<'info> Swap<'info> {
             ),
         };
 
-        let signer_seeds: &[&[&[u8]]] = &[&[
-            CONFIG_SEED,
-            &self.config.seed.to_le_bytes(),
-            &[self.config.bump],
-        ]];
+        let signer_seeds: &[&[&[u8]]] =
+            &[&[CONFIG_SEED, &config.seed.to_le_bytes(), &[config.bump]]];
 
         transfer_checked(
             CpiContext::new_with_signer(

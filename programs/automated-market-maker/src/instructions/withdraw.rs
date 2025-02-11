@@ -20,16 +20,16 @@ pub struct Withdraw<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
     #[account(
-        has_one = mint_x,
-        has_one = mint_y,
-        seeds = [CONFIG_SEED, config.seed.to_le_bytes().as_ref()],
-        bump = config.bump,
+        // has_one = mint_x,
+        // has_one = mint_y,
+        // seeds = [CONFIG_SEED, config.seed.to_le_bytes().as_ref()],
+        // bump = config.bump,
     )]
-    pub config: Account<'info, Config>,
+    pub config: AccountLoader<'info, Config>,
     #[account(
         mut,
-        seeds = [LP_SEED, config.key().as_ref()],
-        bump = config.lp_bump,
+        // seeds = [LP_SEED, config.key().as_ref()],
+        // bump = config.lp_bump,
     )]
     pub mint_lp: Box<InterfaceAccount<'info, Mint>>,
     #[account(mint::token_program = token_program)]
@@ -95,11 +95,10 @@ impl<'info> Withdraw<'info> {
             ),
         };
 
-        let signer_seeds: &[&[&[u8]]] = &[&[
-            CONFIG_SEED,
-            &self.config.seed.to_le_bytes(),
-            &[self.config.bump],
-        ]];
+        let config = self.config.load()?;
+
+        let signer_seeds: &[&[&[u8]]] =
+            &[&[CONFIG_SEED, &config.seed.to_le_bytes(), &[config.bump]]];
 
         transfer_checked(
             CpiContext::new_with_signer(
@@ -118,7 +117,7 @@ impl<'info> Withdraw<'info> {
     }
 
     pub fn withdraw(&self, args: WithdrawArgs) -> Result<()> {
-        self.config.invariant()?;
+        // self.config.invariant()?;
         require_gt!(args.amount, 0, AMMError::InvalidAmount);
         require!(
             args.min_x != 0 && args.min_y != 0,

@@ -20,16 +20,16 @@ pub struct Deposit<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
     #[account(
-        has_one = mint_x,
-        has_one = mint_y,
-        seeds = [CONFIG_SEED, config.seed.to_le_bytes().as_ref()],
-        bump = config.bump,
+        // has_one = mint_x,
+        // has_one = mint_y,
+        // seeds = [CONFIG_SEED, config.seed.to_le_bytes().as_ref()],
+        // bump = config.bump,
     )]
-    pub config: Account<'info, Config>,
+    pub config: AccountLoader<'info, Config>,
     #[account(
         mut,
-        seeds = [LP_SEED, config.key().as_ref()],
-        bump = config.lp_bump,
+        // seeds = [LP_SEED, config.key().as_ref()],
+        // bump = config.lp_bump,
     )]
     pub mint_lp: Box<InterfaceAccount<'info, Mint>>,
     #[account(mint::token_program = token_program)]
@@ -110,7 +110,7 @@ impl<'info> Deposit<'info> {
     }
 
     pub fn deposit(&self, args: DepositArgs) -> Result<()> {
-        self.config.invariant()?;
+        // self.config.invariant()?;
         require_gt!(args.amount, 0, AMMError::InvalidAmount);
 
         let (amount_x, amount_y) = match self.mint_lp.supply == 0
@@ -140,11 +140,10 @@ impl<'info> Deposit<'info> {
         self.deposit_tokens(true, amount_x)?;
         self.deposit_tokens(false, amount_y)?;
 
-        let signer_seeds: &[&[&[u8]]] = &[&[
-            CONFIG_SEED,
-            &self.config.seed.to_le_bytes(),
-            &[self.config.bump],
-        ]];
+        let config = self.config.load()?;
+
+        let signer_seeds: &[&[&[u8]]] =
+            &[&[CONFIG_SEED, &config.seed.to_le_bytes(), &[config.bump]]];
 
         mint_to(
             CpiContext::new_with_signer(

@@ -15,21 +15,23 @@ pub struct Update<'info> {
         mut,
         has_one = authority @ AMMError::InvalidConfigAuthority,
     )]
-    pub config: Account<'info, Config>,
+    pub config: AccountLoader<'info, Config>,
 }
 
 impl<'info> Update<'info> {
     pub fn update(&mut self, args: UpdateArgs) -> Result<()> {
-        if let Some(locked) = args.locked {
-            self.config.locked = locked;
-        }
+        let config = &mut self.config.load_mut()?;
+
+        // if let Some(locked) = args.locked {
+        //     config.locked = locked;
+        // }
 
         if let Some(fee) = args.fee {
-            self.config.fee = fee;
+            config.fee = fee;
         }
 
         if let Some(authority) = args.authority {
-            self.config.authority = authority;
+            config.authority = authority;
         }
 
         Ok(())

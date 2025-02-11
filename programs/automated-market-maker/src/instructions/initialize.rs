@@ -24,7 +24,7 @@ pub struct Initialize<'info> {
         seeds = [CONFIG_SEED, args.seed.to_le_bytes().as_ref()],
         bump,
     )]
-    pub config: Box<Account<'info, Config>>,
+    pub config: AccountLoader<'info, Config>,
     #[account(
         init,
         payer = authority,
@@ -61,16 +61,27 @@ pub struct Initialize<'info> {
 
 impl<'info> Initialize<'info> {
     pub fn initialize(&mut self, bumps: InitializeBumps, args: InitializeArgs) -> Result<()> {
-        self.config.set_inner(Config {
-            seed: args.seed,
-            locked: args.locked,
-            bump: bumps.config,
-            lp_bump: bumps.mint_lp,
-            fee: args.fee,
-            mint_x: self.mint_x.key(),
-            mint_y: self.mint_y.key(),
-            authority: self.authority.key(),
-        });
+        let config = &mut self.config.load_init()?;
+
+        // config.set_inner(Config {
+        //     seed: args.seed,
+        //     locked: args.locked,
+        //     bump: bumps.config,
+        //     lp_bump: bumps.mint_lp,
+        //     fee: args.fee,
+        //     mint_x: self.mint_x.key(),
+        //     mint_y: self.mint_y.key(),
+        //     authority: self.authority.key(),
+        // });
+
+        config.seed = args.seed;
+        // config.locked = args.locked;
+        config.bump = bumps.config;
+        config.lp_bump = bumps.mint_lp;
+        config.fee = args.fee;
+        config.mint_x = self.mint_x.key();
+        config.mint_y = self.mint_y.key();
+        config.authority = self.authority.key();
 
         Ok(())
     }
