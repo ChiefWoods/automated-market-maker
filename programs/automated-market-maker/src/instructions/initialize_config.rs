@@ -1,20 +1,17 @@
 use crate::{constants::*, state::*};
 use anchor_lang::{prelude::*, Discriminator};
-use anchor_spl::{
-    associated_token::AssociatedToken,
-    token_interface::{Mint, TokenAccount, TokenInterface},
-};
+use anchor_spl::token_interface::{Mint, TokenInterface};
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
-pub struct InitializeArgs {
+pub struct InitializeConfigArgs {
     pub seed: u64,
     pub locked: bool,
     pub fee: u16,
 }
 
 #[derive(Accounts)]
-#[instruction(args: InitializeArgs)]
-pub struct Initialize<'info> {
+#[instruction(args: InitializeConfigArgs)]
+pub struct InitializeConfig<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
     #[account(
@@ -24,7 +21,7 @@ pub struct Initialize<'info> {
         seeds = [CONFIG_SEED, args.seed.to_le_bytes().as_ref()],
         bump,
     )]
-    pub config: Box<Account<'info, Config>>,
+    pub config: Account<'info, Config>,
     #[account(
         init,
         payer = authority,
@@ -32,35 +29,23 @@ pub struct Initialize<'info> {
         bump,
         mint::decimals = 6,
         mint::authority = config,
+        mint::token_program = token_program,
     )]
-    pub mint_lp: Box<InterfaceAccount<'info, Mint>>,
+    pub mint_lp: InterfaceAccount<'info, Mint>,
     #[account(mint::token_program = token_program)]
-    pub mint_x: Box<InterfaceAccount<'info, Mint>>,
+    pub mint_x: InterfaceAccount<'info, Mint>,
     #[account(mint::token_program = token_program)]
-    pub mint_y: Box<InterfaceAccount<'info, Mint>>,
-    #[account(
-        init,
-        payer = authority,
-        associated_token::mint = mint_x,
-        associated_token::authority = config,
-        associated_token::token_program = token_program,
-    )]
-    pub vault_x: Box<InterfaceAccount<'info, TokenAccount>>,
-    #[account(
-        init,
-        payer = authority,
-        associated_token::mint = mint_y,
-        associated_token::authority = config,
-        associated_token::token_program = token_program,
-    )]
-    pub vault_y: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub mint_y: InterfaceAccount<'info, Mint>,
     pub token_program: Interface<'info, TokenInterface>,
-    pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
 }
 
-impl<'info> Initialize<'info> {
-    pub fn initialize(&mut self, bumps: InitializeBumps, args: InitializeArgs) -> Result<()> {
+impl<'info> InitializeConfig<'info> {
+    pub fn initialize_config(
+        &mut self,
+        bumps: InitializeConfigBumps,
+        args: InitializeConfigArgs,
+    ) -> Result<()> {
         self.config.set_inner(Config {
             seed: args.seed,
             locked: args.locked,

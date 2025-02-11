@@ -114,13 +114,25 @@ describe("deposit", () => {
     ]));
 
     await program.methods
-      .initialize({
+      .initializeConfig({
         seed,
         locked: false,
         fee: 100,
       })
       .accounts({
         authority: admin.publicKey,
+        mintX: mintX.publicKey,
+        mintY: mintY.publicKey,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .signers([admin])
+      .rpc();
+
+    await program.methods
+      .initializeVaults()
+      .accountsPartial({
+        authority: admin.publicKey,
+        config: configPda,
         mintX: mintX.publicKey,
         mintY: mintY.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
@@ -194,7 +206,8 @@ describe("deposit", () => {
         fee: null,
         authority: null,
       })
-      .accounts({
+      .accountsPartial({
+        authority: admin.publicKey,
         config: configPda,
       })
       .signers([admin])
@@ -219,8 +232,10 @@ describe("deposit", () => {
         .rpc();
     } catch (err) {
       expect(err).toBeInstanceOf(AnchorError);
-      expect(err.errorCode.error.code).toEqual("PoolLocked");
-      expect(err.errorCode.error.number).toEqual(6001);
+
+      const { error } = err as AnchorError;
+      expect(error.errorCode.code).toEqual("PoolLocked");
+      expect(error.errorCode.number).toEqual(6001);
     }
   });
 
@@ -244,8 +259,10 @@ describe("deposit", () => {
         .rpc();
     } catch (err) {
       expect(err).toBeInstanceOf(AnchorError);
-      expect(err.errorCode.error.code).toEqual("InvalidAmount");
-      expect(err.errorCode.error.number).toEqual(6002);
+
+      const { error } = err as AnchorError;
+      expect(error.errorCode.code).toEqual("InvalidAmount");
+      expect(error.errorCode.number).toEqual(6002);
     }
   });
 });

@@ -36,13 +36,25 @@ describe("update", () => {
     ));
 
     await program.methods
-      .initialize({
+      .initializeConfig({
         seed,
         locked: false,
         fee: 100,
       })
       .accounts({
         authority: authorityA.publicKey,
+        mintX: mintX.publicKey,
+        mintY: mintY.publicKey,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .signers([authorityA])
+      .rpc();
+
+    await program.methods
+      .initializeVaults()
+      .accountsPartial({
+        authority: authorityA.publicKey,
+        config: configPda,
         mintX: mintX.publicKey,
         mintY: mintY.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
@@ -62,7 +74,8 @@ describe("update", () => {
         fee,
         authority,
       })
-      .accounts({
+      .accountsPartial({
+        authority: authorityA.publicKey,
         config: configPda,
       })
       .signers([authorityA])
@@ -87,15 +100,18 @@ describe("update", () => {
           fee,
           authority,
         })
-        .accounts({
+        .accountsPartial({
+          authority: authorityB.publicKey,
           config: configPda,
         })
         .signers([authorityB])
         .rpc();
     } catch (err) {
       expect(err).toBeInstanceOf(AnchorError);
-      expect(err.errorCode.error.code).toEqual("InvalidConfigAuthority");
-      expect(err.errorCode.error.number).toEqual(6000);
+
+      const { error } = err as AnchorError;
+      expect(error.errorCode.code).toEqual("InvalidConfigAuthority");
+      expect(error.errorCode.number).toEqual(6000);
     }
   });
 });

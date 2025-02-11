@@ -43,7 +43,7 @@ describe("initialize", () => {
     const fee = 100;
 
     await program.methods
-      .initialize({
+      .initializeConfig({
         seed,
         locked,
         fee,
@@ -58,6 +58,19 @@ describe("initialize", () => {
       .rpc();
 
     const [configPda, configBump] = getConfigPdaAndBump(seed);
+
+    await program.methods
+      .initializeVaults()
+      .accountsPartial({
+        authority: authority.publicKey,
+        config: configPda,
+        mintX: mintX.publicKey,
+        mintY: mintY.publicKey,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .signers([authority])
+      .rpc();
+
     const configAcc = await getConfigAcc(program, configPda);
     const [mintLpPda, mintLpBump] = getMintLpPdaAndBump(configPda);
 
