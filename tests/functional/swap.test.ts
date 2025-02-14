@@ -202,17 +202,17 @@ describe("swap", () => {
       .amount;
     const postVaultYBal = (await getAccount(provider.connection, vaultYPda))
       .amount;
-
-    expect(Number(postVaultXBal)).toBeGreaterThan(Number(initVaultXBal));
-    expect(Number(postVaultYBal)).toBeLessThan(Number(initVaultYBal));
-
     const postUserAtaXBal = (await getAccount(provider.connection, userAtaXPda))
       .amount;
     const postUserAtaYBal = (await getAccount(provider.connection, userAtaYPda))
       .amount;
 
-    expect(Number(postUserAtaXBal)).toBeLessThan(Number(initUserAtaXBal));
-    expect(Number(postUserAtaYBal)).toBeGreaterThan(Number(initUserAtaYBal));
+    expect(Number(postVaultXBal - initVaultXBal)).toEqual(
+      Number(initUserAtaXBal - postUserAtaXBal)
+    );
+    expect(Number(initVaultYBal - postVaultYBal)).toEqual(
+      Number(postUserAtaYBal - initUserAtaYBal)
+    );
   });
 
   test("throws if swapping from a locked pool", async () => {
