@@ -24,6 +24,12 @@ pub struct Swap<'info> {
         bump = config.bump,
     )]
     pub config: Account<'info, Config>,
+    #[account(
+        mut,
+        seeds = [LP_SEED, config.key().as_ref()],
+        bump = config.lp_bump,
+    )]
+    pub mint_lp: Box<InterfaceAccount<'info, Mint>>,
     #[account(mint::token_program = token_program)]
     pub mint_x: Box<InterfaceAccount<'info, Mint>>,
     #[account(mint::token_program = token_program)]
@@ -71,7 +77,7 @@ impl<'info> Swap<'info> {
         let mut curve = ConstantProduct::init(
             self.vault_x.amount,
             self.vault_y.amount,
-            self.vault_x.amount,
+            self.mint_lp.supply,
             self.config.fee,
             None,
         )
