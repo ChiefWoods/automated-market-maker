@@ -2,14 +2,14 @@ use crate::{error::AMMError, state::*};
 use anchor_lang::prelude::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
-pub struct UpdateArgs {
+pub struct UpdateConfigArgs {
     pub locked: Option<bool>,
     pub fee: Option<u16>,
     pub authority: Option<Pubkey>,
 }
 
 #[derive(Accounts)]
-pub struct Update<'info> {
+pub struct UpdateConfig<'info> {
     pub authority: Signer<'info>,
     #[account(
         mut,
@@ -18,18 +18,18 @@ pub struct Update<'info> {
     pub config: Account<'info, Config>,
 }
 
-impl<'info> Update<'info> {
-    pub fn update(&mut self, args: UpdateArgs) -> Result<()> {
+impl UpdateConfig<'_> {
+    pub fn update_config(ctx: Context<UpdateConfig>, args: UpdateConfigArgs) -> Result<()> {
         if let Some(locked) = args.locked {
-            self.config.locked = locked;
+            ctx.accounts.config.locked = locked;
         }
 
         if let Some(fee) = args.fee {
-            self.config.fee = fee;
+            ctx.accounts.config.fee = fee;
         }
 
         if let Some(authority) = args.authority {
-            self.config.authority = authority;
+            ctx.accounts.config.authority = authority;
         }
 
         Ok(())

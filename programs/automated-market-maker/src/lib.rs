@@ -19,26 +19,26 @@ pub mod automated_market_maker {
         ctx: Context<InitializeConfig>,
         args: InitializeConfigArgs,
     ) -> Result<()> {
-        ctx.accounts.initialize_config(ctx.bumps, args)
+        InitializeConfig::initialize_config(ctx, args)
     }
 
     pub fn initialize_vaults(ctx: Context<InitializeVaults>) -> Result<()> {
-        ctx.accounts.initialize_vaults()
+        InitializeVaults::initialize_vaults(ctx)
     }
 
-    pub fn update(ctx: Context<Update>, args: UpdateArgs) -> Result<()> {
-        ctx.accounts.update(args)
+    pub fn update_config(ctx: Context<UpdateConfig>, args: UpdateConfigArgs) -> Result<()> {
+        UpdateConfig::update_config(ctx, args)
     }
 
     pub fn deposit(ctx: Context<Deposit>, args: DepositArgs) -> Result<()> {
-        ctx.accounts.deposit(args)
+        Deposit::deposit(ctx, args)
     }
 
     pub fn withdraw(ctx: Context<Withdraw>, args: WithdrawArgs) -> Result<()> {
-        ctx.accounts.withdraw(args)
+        Withdraw::withdraw(ctx, args)
     }
 
     pub fn swap(ctx: Context<Swap>, args: SwapArgs) -> Result<()> {
-        ctx.accounts.swap(args)
+        Swap::swap(ctx, args)
     }
 }

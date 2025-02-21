@@ -69,16 +69,16 @@ pub struct Swap<'info> {
     pub system_program: Program<'info, System>,
 }
 
-impl<'info> Swap<'info> {
-    pub fn swap(&self, args: SwapArgs) -> Result<()> {
-        self.config.invariant()?;
+impl Swap<'_> {
+    pub fn swap(ctx: Context<Swap>, args: SwapArgs) -> Result<()> {
+        Config::invariant(&ctx.accounts.config)?;
         require_gt!(args.amount, 0, AMMError::InvalidAmount);
 
         let mut curve = ConstantProduct::init(
-            self.vault_x.amount,
-            self.vault_y.amount,
-            self.mint_lp.supply,
-            self.config.fee,
+            ctx.accounts.vault_x.amount,
+            ctx.accounts.vault_y.amount,
+            ctx.accounts.mint_lp.supply,
+            ctx.accounts.config.fee,
             None,
         )
         .unwrap();
@@ -95,24 +95,24 @@ impl<'info> Swap<'info> {
 
         let (from, to, mint, decimals) = match args.is_x {
             true => (
-                self.user_x.to_account_info(),
-                self.vault_x.to_account_info(),
-                self.mint_x.to_account_info(),
-                self.mint_x.decimals,
+                ctx.accounts.user_x.to_account_info(),
+                ctx.accounts.vault_x.to_account_info(),
+                ctx.accounts.mint_x.to_account_info(),
+                ctx.accounts.mint_x.decimals,
             ),
             false => (
-                self.user_y.to_account_info(),
-                self.vault_y.to_account_info(),
-                self.mint_y.to_account_info(),
-                self.mint_y.decimals,
+                ctx.accounts.user_y.to_account_info(),
+                ctx.accounts.vault_y.to_account_info(),
+                ctx.accounts.mint_y.to_account_info(),
+                ctx.accounts.mint_y.decimals,
             ),
         };
 
         transfer_checked(
             CpiContext::new(
-                self.token_program.to_account_info(),
+                ctx.accounts.token_program.to_account_info(),
                 TransferChecked {
-                    authority: self.user.to_account_info(),
+                    authority: ctx.accounts.user.to_account_info(),
                     from,
                     to,
                     mint,
@@ -124,30 +124,30 @@ impl<'info> Swap<'info> {
 
         let (from, to, mint, decimals) = match args.is_x {
             true => (
-                self.vault_y.to_account_info(),
-                self.user_y.to_account_info(),
-                self.mint_y.to_account_info(),
-                self.mint_y.decimals,
+                ctx.accounts.vault_y.to_account_info(),
+                ctx.accounts.user_y.to_account_info(),
+                ctx.accounts.mint_y.to_account_info(),
+                ctx.accounts.mint_y.decimals,
             ),
             false => (
-                self.vault_x.to_account_info(),
-                self.user_x.to_account_info(),
-                self.mint_x.to_account_info(),
-                self.mint_x.decimals,
+                ctx.accounts.vault_x.to_account_info(),
+                ctx.accounts.user_x.to_account_info(),
+                ctx.accounts.mint_x.to_account_info(),
+                ctx.accounts.mint_x.decimals,
             ),
         };
 
         let signer_seeds: &[&[&[u8]]] = &[&[
             CONFIG_SEED,
-            &self.config.seed.to_le_bytes(),
-            &[self.config.bump],
+            &ctx.accounts.config.seed.to_le_bytes(),
+            &[ctx.accounts.config.bump],
         ]];
 
         transfer_checked(
             CpiContext::new_with_signer(
-                self.token_program.to_account_info(),
+                ctx.accounts.token_program.to_account_info(),
                 TransferChecked {
-                    authority: self.config.to_account_info(),
+                    authority: ctx.accounts.config.to_account_info(),
                     from,
                     to,
                     mint,

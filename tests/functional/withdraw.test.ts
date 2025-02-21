@@ -243,7 +243,7 @@ describe("withdraw", () => {
 
   test("throws if withdrawing from a locked pool", async () => {
     await program.methods
-      .update({
+      .updateConfig({
         locked: true,
         fee: null,
         authority: null,

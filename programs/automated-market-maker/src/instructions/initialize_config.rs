@@ -40,21 +40,20 @@ pub struct InitializeConfig<'info> {
     pub system_program: Program<'info, System>,
 }
 
-impl<'info> InitializeConfig<'info> {
+impl InitializeConfig<'_> {
     pub fn initialize_config(
-        &mut self,
-        bumps: InitializeConfigBumps,
+        ctx: Context<InitializeConfig>,
         args: InitializeConfigArgs,
     ) -> Result<()> {
-        self.config.set_inner(Config {
+        ctx.accounts.config.set_inner(Config {
             seed: args.seed,
             locked: args.locked,
-            bump: bumps.config,
-            lp_bump: bumps.mint_lp,
+            bump: ctx.bumps.config,
+            lp_bump: ctx.bumps.mint_lp,
             fee: args.fee,
-            mint_x: self.mint_x.key(),
-            mint_y: self.mint_y.key(),
-            authority: self.authority.key(),
+            mint_x: ctx.accounts.mint_x.key(),
+            mint_y: ctx.accounts.mint_y.key(),
+            authority: ctx.accounts.authority.key(),
         });
 
         Ok(())

@@ -78,34 +78,34 @@ pub struct Withdraw<'info> {
     pub system_program: Program<'info, System>,
 }
 
-impl<'info> Withdraw<'info> {
-    pub fn withdraw_tokens(&self, is_x: bool, amount: u64) -> Result<()> {
+impl Withdraw<'_> {
+    pub fn withdraw_tokens(ctx: &Context<Withdraw>, is_x: bool, amount: u64) -> Result<()> {
         let (from, to, mint, decimals) = match is_x {
             true => (
-                self.vault_x.to_account_info(),
-                self.user_x.to_account_info(),
-                self.mint_x.to_account_info(),
-                self.mint_x.decimals,
+                ctx.accounts.vault_x.to_account_info(),
+                ctx.accounts.user_x.to_account_info(),
+                ctx.accounts.mint_x.to_account_info(),
+                ctx.accounts.mint_x.decimals,
             ),
             false => (
-                self.vault_y.to_account_info(),
-                self.user_y.to_account_info(),
-                self.mint_y.to_account_info(),
-                self.mint_y.decimals,
+                ctx.accounts.vault_y.to_account_info(),
+                ctx.accounts.user_y.to_account_info(),
+                ctx.accounts.mint_y.to_account_info(),
+                ctx.accounts.mint_y.decimals,
             ),
         };
 
         let signer_seeds: &[&[&[u8]]] = &[&[
             CONFIG_SEED,
-            &self.config.seed.to_le_bytes(),
-            &[self.config.bump],
+            &ctx.accounts.config.seed.to_le_bytes(),
+            &[ctx.accounts.config.bump],
         ]];
 
         transfer_checked(
             CpiContext::new_with_signer(
-                self.token_program.to_account_info(),
+                ctx.accounts.token_program.to_account_info(),
                 TransferChecked {
-                    authority: self.config.to_account_info(),
+                    authority: ctx.accounts.config.to_account_info(),
                     from,
                     to,
                     mint,
@@ -117,8 +117,8 @@ impl<'info> Withdraw<'info> {
         )
     }
 
-    pub fn withdraw(&self, args: WithdrawArgs) -> Result<()> {
-        self.config.invariant()?;
+    pub fn withdraw(ctx: Context<Withdraw>, args: WithdrawArgs) -> Result<()> {
+        Config::invariant(&ctx.accounts.config)?;
         require_gt!(args.amount, 0, AMMError::InvalidAmount);
         require!(
             args.min_x != 0 && args.min_y != 0,
@@ -129,9 +129,9 @@ impl<'info> Withdraw<'info> {
             x: amount_x,
             y: amount_y,
         } = ConstantProduct::xy_withdraw_amounts_from_l(
-            self.vault_x.amount,
-            self.vault_y.amount,
-            self.mint_lp.supply,
+            ctx.accounts.vault_x.amount,
+            ctx.accounts.vault_y.amount,
+            ctx.accounts.mint_lp.supply,
             args.amount,
             6,
         )
@@ -142,16 +142,16 @@ impl<'info> Withdraw<'info> {
             AMMError::SlippageExceeded
         );
 
-        self.withdraw_tokens(true, amount_x)?;
-        self.withdraw_tokens(false, amount_y)?;
+        Withdraw::withdraw_tokens(&ctx, true, amount_x)?;
+        Withdraw::withdraw_tokens(&ctx, false, amount_y)?;
 
         burn(
             CpiContext::new(
-                self.token_program.to_account_info(),
+                ctx.accounts.token_program.to_account_info(),
                 Burn {
-                    authority: self.user.to_account_info(),
-                    from: self.user_lp.to_account_info(),
-                    mint: self.mint_lp.to_account_info(),
+                    authority: ctx.accounts.user.to_account_info(),
+                    from: ctx.accounts.user_lp.to_account_info(),
+                    mint: ctx.accounts.mint_lp.to_account_info(),
                 },
             ),
             args.amount,

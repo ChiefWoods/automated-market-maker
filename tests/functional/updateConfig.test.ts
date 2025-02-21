@@ -69,7 +69,7 @@ describe("update", () => {
     const authority = authorityB.publicKey;
 
     await program.methods
-      .update({
+      .updateConfig({
         locked,
         fee,
         authority,
@@ -95,7 +95,7 @@ describe("update", () => {
 
     try {
       await program.methods
-        .update({
+        .updateConfig({
           locked,
           fee,
           authority,

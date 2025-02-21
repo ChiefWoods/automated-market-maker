@@ -77,28 +77,28 @@ pub struct Deposit<'info> {
     pub system_program: Program<'info, System>,
 }
 
-impl<'info> Deposit<'info> {
-    pub fn deposit_tokens(&self, is_x: bool, amount: u64) -> Result<()> {
+impl Deposit<'_> {
+    pub fn deposit_tokens(ctx: &Context<Deposit>, is_x: bool, amount: u64) -> Result<()> {
         let (from, to, mint, decimals) = match is_x {
             true => (
-                self.user_x.to_account_info(),
-                self.vault_x.to_account_info(),
-                self.mint_x.to_account_info(),
-                self.mint_x.decimals,
+                ctx.accounts.user_x.to_account_info(),
+                ctx.accounts.vault_x.to_account_info(),
+                ctx.accounts.mint_x.to_account_info(),
+                ctx.accounts.mint_x.decimals,
             ),
             false => (
-                self.user_y.to_account_info(),
-                self.vault_y.to_account_info(),
-                self.mint_y.to_account_info(),
-                self.mint_y.decimals,
+                ctx.accounts.user_y.to_account_info(),
+                ctx.accounts.vault_y.to_account_info(),
+                ctx.accounts.mint_y.to_account_info(),
+                ctx.accounts.mint_y.decimals,
             ),
         };
 
         transfer_checked(
             CpiContext::new(
-                self.token_program.to_account_info(),
+                ctx.accounts.token_program.to_account_info(),
                 TransferChecked {
-                    authority: self.user.to_account_info(),
+                    authority: ctx.accounts.user.to_account_info(),
                     from,
                     to,
                     mint,
@@ -109,20 +109,20 @@ impl<'info> Deposit<'info> {
         )
     }
 
-    pub fn deposit(&self, args: DepositArgs) -> Result<()> {
-        self.config.invariant()?;
+    pub fn deposit(ctx: Context<Deposit>, args: DepositArgs) -> Result<()> {
+        Config::invariant(&ctx.accounts.config)?;
         require_gt!(args.amount, 0, AMMError::InvalidAmount);
 
-        let (amount_x, amount_y) = match self.mint_lp.supply == 0
-            && self.vault_x.amount == 0
-            && self.vault_y.amount == 0
+        let (amount_x, amount_y) = match ctx.accounts.mint_lp.supply == 0
+            && ctx.accounts.vault_x.amount == 0
+            && ctx.accounts.vault_y.amount == 0
         {
             true => (args.max_x, args.max_y),
             false => {
                 let amounts = ConstantProduct::xy_deposit_amounts_from_l(
-                    self.vault_x.amount,
-                    self.vault_y.amount,
-                    self.mint_lp.supply,
+                    ctx.accounts.vault_x.amount,
+                    ctx.accounts.vault_y.amount,
+                    ctx.accounts.mint_lp.supply,
                     args.amount,
                     6,
                 )
@@ -137,22 +137,22 @@ impl<'info> Deposit<'info> {
             AMMError::SlippageExceeded
         );
 
-        self.deposit_tokens(true, amount_x)?;
-        self.deposit_tokens(false, amount_y)?;
+        Deposit::deposit_tokens(&ctx, true, amount_x)?;
+        Deposit::deposit_tokens(&ctx, false, amount_y)?;
 
         let signer_seeds: &[&[&[u8]]] = &[&[
             CONFIG_SEED,
-            &self.config.seed.to_le_bytes(),
-            &[self.config.bump],
+            &ctx.accounts.config.seed.to_le_bytes(),
+            &[ctx.accounts.config.bump],
         ]];
 
         mint_to(
             CpiContext::new_with_signer(
-                self.token_program.to_account_info(),
+                ctx.accounts.token_program.to_account_info(),
                 MintTo {
-                    authority: self.config.to_account_info(),
-                    mint: self.mint_lp.to_account_info(),
-                    to: self.user_lp.to_account_info(),
+                    authority: ctx.accounts.config.to_account_info(),
+                    mint: ctx.accounts.mint_lp.to_account_info(),
+                    to: ctx.accounts.user_lp.to_account_info(),
                 },
                 signer_seeds,
             ),

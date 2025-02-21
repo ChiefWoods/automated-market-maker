@@ -217,7 +217,7 @@ describe("swap", () => {
 
   test("throws if swapping from a locked pool", async () => {
     await program.methods
-      .update({
+      .updateConfig({
         locked: true,
         fee: null,
         authority: null,

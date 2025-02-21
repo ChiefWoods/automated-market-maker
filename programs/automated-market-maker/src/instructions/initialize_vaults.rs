@@ -39,8 +39,8 @@ pub struct InitializeVaults<'info> {
     pub system_program: Program<'info, System>,
 }
 
-impl<'info> InitializeVaults<'info> {
-    pub fn initialize_vaults(&self) -> Result<()> {
+impl InitializeVaults<'_> {
+    pub fn initialize_vaults(_ctx: Context<InitializeVaults>) -> Result<()> {
         Ok(())
     }
 }

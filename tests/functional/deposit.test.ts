@@ -44,9 +44,8 @@ describe("deposit", () => {
   const [configPda] = getConfigPdaAndBump(seed);
 
   beforeEach(async () => {
-    const [userAtaXPubkeyData, userAtaYPubkeyData] = Array.from(
-      { length: 2 },
-      () => Buffer.alloc(ACCOUNT_SIZE)
+    const [userAtaXData, userAtaYData] = Array.from({ length: 2 }, () =>
+      Buffer.alloc(ACCOUNT_SIZE)
     );
 
     AccountLayout.encode(
@@ -63,7 +62,7 @@ describe("deposit", () => {
         owner: user.publicKey,
         state: 1,
       },
-      userAtaXPubkeyData
+      userAtaXData
     );
 
     AccountLayout.encode(
@@ -80,7 +79,7 @@ describe("deposit", () => {
         owner: user.publicKey,
         state: 1,
       },
-      userAtaYPubkeyData
+      userAtaYData
     );
 
     ({ context, provider, program } = await getBankrunSetup([
@@ -96,7 +95,7 @@ describe("deposit", () => {
       {
         address: userAtaXPda,
         info: {
-          data: userAtaXPubkeyData,
+          data: userAtaXData,
           executable: false,
           lamports: LAMPORTS_PER_SOL,
           owner: TOKEN_PROGRAM_ID,
@@ -105,7 +104,7 @@ describe("deposit", () => {
       {
         address: userAtaYPda,
         info: {
-          data: userAtaYPubkeyData,
+          data: userAtaYData,
           executable: false,
           lamports: LAMPORTS_PER_SOL,
           owner: TOKEN_PROGRAM_ID,
@@ -201,7 +200,7 @@ describe("deposit", () => {
 
   test("throws if depositing into a locked pool", async () => {
     await program.methods
-      .update({
+      .updateConfig({
         locked: true,
         fee: null,
         authority: null,
