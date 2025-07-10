@@ -34,7 +34,7 @@ describe("withdraw", () => {
       mint.publicKey,
       user.publicKey,
       false,
-      TOKEN_PROGRAM_ID
+      TOKEN_PROGRAM_ID,
     );
   });
 
@@ -44,7 +44,7 @@ describe("withdraw", () => {
   beforeEach(async () => {
     const [userAtaXPubkeyData, userAtaYPubkeyData] = Array.from(
       { length: 2 },
-      () => Buffer.alloc(ACCOUNT_SIZE)
+      () => Buffer.alloc(ACCOUNT_SIZE),
     );
 
     AccountLayout.encode(
@@ -61,7 +61,7 @@ describe("withdraw", () => {
         owner: user.publicKey,
         state: 1,
       },
-      userAtaXPubkeyData
+      userAtaXPubkeyData,
     );
 
     AccountLayout.encode(
@@ -78,7 +78,7 @@ describe("withdraw", () => {
         owner: user.publicKey,
         state: 1,
       },
-      userAtaYPubkeyData
+      userAtaYPubkeyData,
     );
 
     ({ context, provider, program } = await getBankrunSetup([
@@ -112,25 +112,13 @@ describe("withdraw", () => {
     ]));
 
     await program.methods
-      .initializeConfig({
+      .initialize({
         seed,
         locked: false,
         fee: 100,
       })
       .accounts({
         authority: admin.publicKey,
-        mintX: mintX.publicKey,
-        mintY: mintY.publicKey,
-        tokenProgram: TOKEN_PROGRAM_ID,
-      })
-      .signers([admin])
-      .rpc();
-
-    await program.methods
-      .initializeVaults()
-      .accountsPartial({
-        authority: admin.publicKey,
-        config: configPda,
         mintX: mintX.publicKey,
         mintY: mintY.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
@@ -161,13 +149,13 @@ describe("withdraw", () => {
       mintX.publicKey,
       configPda,
       true,
-      TOKEN_PROGRAM_ID
+      TOKEN_PROGRAM_ID,
     );
     const vaultYPda = getAssociatedTokenAddressSync(
       mintY.publicKey,
       configPda,
       true,
-      TOKEN_PROGRAM_ID
+      TOKEN_PROGRAM_ID,
     );
 
     const initVaultXBal = (await getAccount(provider.connection, vaultXPda))
@@ -185,7 +173,7 @@ describe("withdraw", () => {
       mintLp,
       user.publicKey,
       false,
-      TOKEN_PROGRAM_ID
+      TOKEN_PROGRAM_ID,
     );
     const initUserAtaLpBal = (
       await getAccount(provider.connection, userAtaLpPda)
@@ -215,10 +203,10 @@ describe("withdraw", () => {
 
     // possible rounding errors from withdraw calculation
     expect(Number(postVaultXBal)).toBeLessThanOrEqual(
-      Number(initVaultXBal) - amount
+      Number(initVaultXBal) - amount,
     );
     expect(Number(postVaultYBal)).toBeLessThanOrEqual(
-      Number(initVaultYBal) - amount
+      Number(initVaultYBal) - amount,
     );
 
     const postUserAtaXBal = (await getAccount(provider.connection, userAtaXPda))
@@ -228,10 +216,10 @@ describe("withdraw", () => {
 
     // possible rounding errors from withdraw calculation
     expect(Number(postUserAtaXBal)).toBeGreaterThanOrEqual(
-      Number(initUserAtaXBal) + amount
+      Number(initUserAtaXBal) + amount,
     );
     expect(Number(postUserAtaYBal)).toBeGreaterThanOrEqual(
-      Number(initUserAtaYBal) + amount
+      Number(initUserAtaYBal) + amount,
     );
 
     const postUserAtaLpBal = (

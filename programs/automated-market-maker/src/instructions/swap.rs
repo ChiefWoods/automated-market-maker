@@ -1,10 +1,11 @@
-use crate::{constants::*, error::AMMError, state::*};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
     token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked},
 };
 use constant_product_curve::{ConstantProduct, LiquidityPair};
+
+use crate::{error::AMMError, Config, CONFIG_SEED, LP_SEED};
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct SwapArgs {
@@ -70,7 +71,7 @@ pub struct Swap<'info> {
 }
 
 impl Swap<'_> {
-    pub fn swap(ctx: Context<Swap>, args: SwapArgs) -> Result<()> {
+    pub fn handler(ctx: Context<Swap>, args: SwapArgs) -> Result<()> {
         Config::invariant(&ctx.accounts.config)?;
         require_gt!(args.amount, 0, AMMError::InvalidAmount);
 

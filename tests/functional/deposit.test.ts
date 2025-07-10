@@ -34,7 +34,7 @@ describe("deposit", () => {
       mint.publicKey,
       user.publicKey,
       false,
-      TOKEN_PROGRAM_ID
+      TOKEN_PROGRAM_ID,
     );
   });
 
@@ -45,7 +45,7 @@ describe("deposit", () => {
 
   beforeEach(async () => {
     const [userAtaXData, userAtaYData] = Array.from({ length: 2 }, () =>
-      Buffer.alloc(ACCOUNT_SIZE)
+      Buffer.alloc(ACCOUNT_SIZE),
     );
 
     AccountLayout.encode(
@@ -62,7 +62,7 @@ describe("deposit", () => {
         owner: user.publicKey,
         state: 1,
       },
-      userAtaXData
+      userAtaXData,
     );
 
     AccountLayout.encode(
@@ -79,7 +79,7 @@ describe("deposit", () => {
         owner: user.publicKey,
         state: 1,
       },
-      userAtaYData
+      userAtaYData,
     );
 
     ({ context, provider, program } = await getBankrunSetup([
@@ -113,25 +113,13 @@ describe("deposit", () => {
     ]));
 
     await program.methods
-      .initializeConfig({
+      .initialize({
         seed,
         locked: false,
         fee: 100,
       })
       .accounts({
         authority: admin.publicKey,
-        mintX: mintX.publicKey,
-        mintY: mintY.publicKey,
-        tokenProgram: TOKEN_PROGRAM_ID,
-      })
-      .signers([admin])
-      .rpc();
-
-    await program.methods
-      .initializeVaults()
-      .accountsPartial({
-        authority: admin.publicKey,
-        config: configPda,
         mintX: mintX.publicKey,
         mintY: mintY.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
@@ -162,13 +150,13 @@ describe("deposit", () => {
       mintX.publicKey,
       configPda,
       true,
-      TOKEN_PROGRAM_ID
+      TOKEN_PROGRAM_ID,
     );
     const vaultYPda = getAssociatedTokenAddressSync(
       mintY.publicKey,
       configPda,
       true,
-      TOKEN_PROGRAM_ID
+      TOKEN_PROGRAM_ID,
     );
 
     const vaultXBal = (await getAccount(provider.connection, vaultXPda)).amount;
@@ -190,7 +178,7 @@ describe("deposit", () => {
       mintLp,
       user.publicKey,
       false,
-      TOKEN_PROGRAM_ID
+      TOKEN_PROGRAM_ID,
     );
     const userAtaLpBal = (await getAccount(provider.connection, userAtaLpPda))
       .amount;

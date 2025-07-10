@@ -1,5 +1,6 @@
-use crate::{error::AMMError, state::*};
 use anchor_lang::prelude::*;
+
+use crate::{error::AMMError, Config};
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct UpdateConfigArgs {

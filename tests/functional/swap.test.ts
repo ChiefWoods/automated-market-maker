@@ -34,7 +34,7 @@ describe("swap", () => {
       mint.publicKey,
       user.publicKey,
       false,
-      TOKEN_PROGRAM_ID
+      TOKEN_PROGRAM_ID,
     );
   });
 
@@ -44,7 +44,7 @@ describe("swap", () => {
   beforeEach(async () => {
     const [userAtaXPubkeyData, userAtaYPubkeyData] = Array.from(
       { length: 2 },
-      () => Buffer.alloc(ACCOUNT_SIZE)
+      () => Buffer.alloc(ACCOUNT_SIZE),
     );
 
     AccountLayout.encode(
@@ -61,7 +61,7 @@ describe("swap", () => {
         owner: user.publicKey,
         state: 1,
       },
-      userAtaXPubkeyData
+      userAtaXPubkeyData,
     );
 
     AccountLayout.encode(
@@ -78,7 +78,7 @@ describe("swap", () => {
         owner: user.publicKey,
         state: 1,
       },
-      userAtaYPubkeyData
+      userAtaYPubkeyData,
     );
 
     ({ context, provider, program } = await getBankrunSetup([
@@ -112,25 +112,13 @@ describe("swap", () => {
     ]));
 
     await program.methods
-      .initializeConfig({
+      .initialize({
         seed,
         locked: false,
         fee: 100,
       })
       .accounts({
         authority: admin.publicKey,
-        mintX: mintX.publicKey,
-        mintY: mintY.publicKey,
-        tokenProgram: TOKEN_PROGRAM_ID,
-      })
-      .signers([admin])
-      .rpc();
-
-    await program.methods
-      .initializeVaults()
-      .accountsPartial({
-        authority: admin.publicKey,
-        config: configPda,
         mintX: mintX.publicKey,
         mintY: mintY.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
@@ -161,13 +149,13 @@ describe("swap", () => {
       mintX.publicKey,
       configPda,
       true,
-      TOKEN_PROGRAM_ID
+      TOKEN_PROGRAM_ID,
     );
     const vaultYPda = getAssociatedTokenAddressSync(
       mintY.publicKey,
       configPda,
       true,
-      TOKEN_PROGRAM_ID
+      TOKEN_PROGRAM_ID,
     );
 
     const initVaultXBal = (await getAccount(provider.connection, vaultXPda))
@@ -208,10 +196,10 @@ describe("swap", () => {
       .amount;
 
     expect(Number(postVaultXBal - initVaultXBal)).toEqual(
-      Number(initUserAtaXBal - postUserAtaXBal)
+      Number(initUserAtaXBal - postUserAtaXBal),
     );
     expect(Number(initVaultYBal - postVaultYBal)).toEqual(
-      Number(postUserAtaYBal - initUserAtaYBal)
+      Number(postUserAtaYBal - initUserAtaYBal),
     );
   });
 

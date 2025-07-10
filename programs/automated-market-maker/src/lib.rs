@@ -15,15 +15,8 @@ declare_id!("C7f2vQaRdp8oJR5R9P86CKn48wQkEmgtdkEpjZy1MaAi");
 pub mod automated_market_maker {
     use super::*;
 
-    pub fn initialize_config(
-        ctx: Context<InitializeConfig>,
-        args: InitializeConfigArgs,
-    ) -> Result<()> {
-        InitializeConfig::initialize_config(ctx, args)
-    }
-
-    pub fn initialize_vaults(ctx: Context<InitializeVaults>) -> Result<()> {
-        InitializeVaults::initialize_vaults(ctx)
+    pub fn initialize(ctx: Context<Initialize>, args: InitializeArgs) -> Result<()> {
+        Initialize::handler(ctx, args)
     }
 
     pub fn update_config(ctx: Context<UpdateConfig>, args: UpdateConfigArgs) -> Result<()> {
@@ -31,14 +24,14 @@ pub mod automated_market_maker {
     }
 
     pub fn deposit(ctx: Context<Deposit>, args: DepositArgs) -> Result<()> {
-        Deposit::deposit(ctx, args)
+        Deposit::handler(ctx, args)
     }
 
     pub fn withdraw(ctx: Context<Withdraw>, args: WithdrawArgs) -> Result<()> {
-        Withdraw::withdraw(ctx, args)
+        Withdraw::handler(ctx, args)
     }
 
     pub fn swap(ctx: Context<Swap>, args: SwapArgs) -> Result<()> {
-        Swap::swap(ctx, args)
+        Swap::handler(ctx, args)
     }
 }

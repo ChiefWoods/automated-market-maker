@@ -1,17 +1,21 @@
-use crate::{constants::*, state::*};
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::{Mint, TokenInterface};
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token_interface::{Mint, TokenAccount, TokenInterface},
+};
+
+use crate::{Config, CONFIG_SEED, LP_SEED};
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
-pub struct InitializeConfigArgs {
+pub struct InitializeArgs {
     pub seed: u64,
     pub locked: bool,
     pub fee: u16,
 }
 
 #[derive(Accounts)]
-#[instruction(args: InitializeConfigArgs)]
-pub struct InitializeConfig<'info> {
+#[instruction(args: InitializeArgs)]
+pub struct Initialize<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
     #[account(
@@ -36,15 +40,29 @@ pub struct InitializeConfig<'info> {
     pub mint_x: InterfaceAccount<'info, Mint>,
     #[account(mint::token_program = token_program)]
     pub mint_y: InterfaceAccount<'info, Mint>,
+    #[account(
+        init,
+        payer = authority,
+        associated_token::mint = mint_x,
+        associated_token::authority = config,
+        associated_token::token_program = token_program,
+    )]
+    pub vault_x: InterfaceAccount<'info, TokenAccount>,
+    #[account(
+        init,
+        payer = authority,
+        associated_token::mint = mint_y,
+        associated_token::authority = config,
+        associated_token::token_program = token_program,
+    )]
+    pub vault_y: InterfaceAccount<'info, TokenAccount>,
     pub token_program: Interface<'info, TokenInterface>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
 }
 
-impl InitializeConfig<'_> {
-    pub fn initialize_config(
-        ctx: Context<InitializeConfig>,
-        args: InitializeConfigArgs,
-    ) -> Result<()> {
+impl Initialize<'_> {
+    pub fn handler(ctx: Context<Initialize>, args: InitializeArgs) -> Result<()> {
         ctx.accounts.config.set_inner(Config {
             seed: args.seed,
             locked: args.locked,

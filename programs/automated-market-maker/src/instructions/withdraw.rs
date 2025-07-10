@@ -1,4 +1,3 @@
-use crate::{constants::*, error::AMMError, state::*};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -7,6 +6,8 @@ use anchor_spl::{
     },
 };
 use constant_product_curve::{ConstantProduct, XYAmounts};
+
+use crate::{error::AMMError, Config, CONFIG_SEED, LP_SEED};
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct WithdrawArgs {
@@ -79,7 +80,7 @@ pub struct Withdraw<'info> {
 }
 
 impl Withdraw<'_> {
-    pub fn withdraw_tokens(ctx: &Context<Withdraw>, is_x: bool, amount: u64) -> Result<()> {
+    fn transfer_tokens(ctx: &Context<Withdraw>, is_x: bool, amount: u64) -> Result<()> {
         let (from, to, mint, decimals) = match is_x {
             true => (
                 ctx.accounts.vault_x.to_account_info(),
@@ -117,7 +118,7 @@ impl Withdraw<'_> {
         )
     }
 
-    pub fn withdraw(ctx: Context<Withdraw>, args: WithdrawArgs) -> Result<()> {
+    pub fn handler(ctx: Context<Withdraw>, args: WithdrawArgs) -> Result<()> {
         Config::invariant(&ctx.accounts.config)?;
         require_gt!(args.amount, 0, AMMError::InvalidAmount);
         require!(
@@ -142,8 +143,8 @@ impl Withdraw<'_> {
             AMMError::SlippageExceeded
         );
 
-        Withdraw::withdraw_tokens(&ctx, true, amount_x)?;
-        Withdraw::withdraw_tokens(&ctx, false, amount_y)?;
+        Withdraw::transfer_tokens(&ctx, true, amount_x)?;
+        Withdraw::transfer_tokens(&ctx, false, amount_y)?;
 
         burn(
             CpiContext::new(

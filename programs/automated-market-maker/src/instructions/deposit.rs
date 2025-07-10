@@ -1,4 +1,3 @@
-use crate::{constants::*, error::AMMError, state::*};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -7,6 +6,8 @@ use anchor_spl::{
     },
 };
 use constant_product_curve::ConstantProduct;
+
+use crate::{error::AMMError, Config, CONFIG_SEED, LP_SEED};
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct DepositArgs {
@@ -78,7 +79,7 @@ pub struct Deposit<'info> {
 }
 
 impl Deposit<'_> {
-    pub fn deposit_tokens(ctx: &Context<Deposit>, is_x: bool, amount: u64) -> Result<()> {
+    fn transfer_tokens(ctx: &Context<Deposit>, is_x: bool, amount: u64) -> Result<()> {
         let (from, to, mint, decimals) = match is_x {
             true => (
                 ctx.accounts.user_x.to_account_info(),
@@ -109,7 +110,7 @@ impl Deposit<'_> {
         )
     }
 
-    pub fn deposit(ctx: Context<Deposit>, args: DepositArgs) -> Result<()> {
+    pub fn handler(ctx: Context<Deposit>, args: DepositArgs) -> Result<()> {
         Config::invariant(&ctx.accounts.config)?;
         require_gt!(args.amount, 0, AMMError::InvalidAmount);
 
@@ -137,8 +138,8 @@ impl Deposit<'_> {
             AMMError::SlippageExceeded
         );
 
-        Deposit::deposit_tokens(&ctx, true, amount_x)?;
-        Deposit::deposit_tokens(&ctx, false, amount_y)?;
+        Deposit::transfer_tokens(&ctx, true, amount_x)?;
+        Deposit::transfer_tokens(&ctx, false, amount_y)?;
 
         let signer_seeds: &[&[&[u8]]] = &[&[
             CONFIG_SEED,

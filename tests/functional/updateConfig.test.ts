@@ -32,29 +32,17 @@ describe("update", () => {
           owner: SystemProgram.programId,
           executable: false,
         },
-      }))
+      })),
     ));
 
     await program.methods
-      .initializeConfig({
+      .initialize({
         seed,
         locked: false,
         fee: 100,
       })
       .accounts({
         authority: authorityA.publicKey,
-        mintX: mintX.publicKey,
-        mintY: mintY.publicKey,
-        tokenProgram: TOKEN_PROGRAM_ID,
-      })
-      .signers([authorityA])
-      .rpc();
-
-    await program.methods
-      .initializeVaults()
-      .accountsPartial({
-        authority: authorityA.publicKey,
-        config: configPda,
         mintX: mintX.publicKey,
         mintY: mintY.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
