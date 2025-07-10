@@ -1,5 +1,5 @@
 use crate::{constants::*, state::*};
-use anchor_lang::{prelude::*, Discriminator};
+use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenInterface};
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
