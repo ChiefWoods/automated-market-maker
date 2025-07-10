@@ -1,37 +1,32 @@
-import { BankrunProvider } from "anchor-bankrun";
 import { beforeEach, describe, expect, test } from "bun:test";
-import { ProgramTestContext } from "solana-bankrun";
 import { AutomatedMarketMaker } from "../../target/types/automated_market_maker";
-import { AnchorError, BN, Program } from "@coral-xyz/anchor";
-import { getBankrunSetup } from "../setup";
-import { Keypair, LAMPORTS_PER_SOL, SystemProgram } from "@solana/web3.js";
+import { BN, Program } from "@coral-xyz/anchor";
+import { Keypair } from "@solana/web3.js";
 import { randomBytes } from "crypto";
 import { mintX, mintY } from "../constants";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { getConfigPdaAndBump } from "../pda";
-import { getConfigAcc } from "../accounts";
+import { getConfigPda } from "../pda";
+import { fetchConfigAcc } from "../accounts";
+import { LiteSVM } from "litesvm";
+import { LiteSVMProvider } from "anchor-litesvm";
+import { expectAnchorError, fundedSystemAccountInfo, getSetup } from "../setup";
 
 describe("update", () => {
-  let { context, provider, program } = {} as {
-    context: ProgramTestContext;
-    provider: BankrunProvider;
+  let { litesvm, provider, program } = {} as {
+    litesvm: LiteSVM;
+    provider: LiteSVMProvider;
     program: Program<AutomatedMarketMaker>;
   };
 
   const [authorityA, authorityB] = Array.from({ length: 2 }, Keypair.generate);
   const seed = new BN(randomBytes(8));
-  const [configPda] = getConfigPdaAndBump(seed);
+  const configPda = getConfigPda(seed);
 
   beforeEach(async () => {
-    ({ context, provider, program } = await getBankrunSetup(
+    ({ litesvm, provider, program } = await getSetup(
       [authorityA, authorityB].map((kp) => ({
-        address: kp.publicKey,
-        info: {
-          lamports: LAMPORTS_PER_SOL * 5,
-          data: Buffer.alloc(0),
-          owner: SystemProgram.programId,
-          executable: false,
-        },
+        pubkey: kp.publicKey,
+        account: fundedSystemAccountInfo(),
       })),
     ));
 
@@ -69,7 +64,7 @@ describe("update", () => {
       .signers([authorityA])
       .rpc();
 
-    const configAcc = await getConfigAcc(program, configPda);
+    const configAcc = await fetchConfigAcc(program, configPda);
 
     expect(configAcc.locked).toEqual(locked);
     expect(configAcc.fee).toEqual(fee);
@@ -95,11 +90,7 @@ describe("update", () => {
         .signers([authorityB])
         .rpc();
     } catch (err) {
-      expect(err).toBeInstanceOf(AnchorError);
-
-      const { error } = err as AnchorError;
-      expect(error.errorCode.code).toEqual("InvalidConfigAuthority");
-      expect(error.errorCode.number).toEqual(6000);
+      expectAnchorError(err, "InvalidConfigAuthority");
     }
   });
 });

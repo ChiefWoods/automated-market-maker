@@ -1,15 +1,7 @@
-import { BankrunProvider } from "anchor-bankrun";
 import { beforeEach, describe, expect, test } from "bun:test";
-import { ProgramTestContext } from "solana-bankrun";
 import { AutomatedMarketMaker } from "../../target/types/automated_market_maker";
-import { AnchorError, BN, Program } from "@coral-xyz/anchor";
-import { getBankrunSetup } from "../setup";
-import {
-  Keypair,
-  LAMPORTS_PER_SOL,
-  PublicKey,
-  SystemProgram,
-} from "@solana/web3.js";
+import { BN, Program } from "@coral-xyz/anchor";
+import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { randomBytes } from "crypto";
 import { mintX, mintY } from "../constants";
 import {
@@ -19,12 +11,15 @@ import {
   getAssociatedTokenAddressSync,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { getConfigPdaAndBump, getMintLpPdaAndBump } from "../pda";
+import { getConfigPda, getMintLpPda } from "../pda";
+import { LiteSVM } from "litesvm";
+import { LiteSVMProvider } from "anchor-litesvm";
+import { expectAnchorError, fundedSystemAccountInfo, getSetup } from "../setup";
 
 describe("deposit", () => {
-  let { context, provider, program } = {} as {
-    context: ProgramTestContext;
-    provider: BankrunProvider;
+  let { litesvm, provider, program } = {} as {
+    litesvm: LiteSVM;
+    provider: LiteSVMProvider;
     program: Program<AutomatedMarketMaker>;
   };
 
@@ -41,7 +36,7 @@ describe("deposit", () => {
   const initUserAtaBal = 10n;
 
   const seed = new BN(randomBytes(8));
-  const [configPda] = getConfigPdaAndBump(seed);
+  const configPda = getConfigPda(seed);
 
   beforeEach(async () => {
     const [userAtaXData, userAtaYData] = Array.from({ length: 2 }, () =>
@@ -82,19 +77,14 @@ describe("deposit", () => {
       userAtaYData,
     );
 
-    ({ context, provider, program } = await getBankrunSetup([
+    ({ litesvm, provider, program } = await getSetup([
       ...[admin, user].map((kp) => ({
-        address: kp.publicKey,
-        info: {
-          lamports: LAMPORTS_PER_SOL * 5,
-          data: Buffer.alloc(0),
-          owner: SystemProgram.programId,
-          executable: false,
-        },
+        pubkey: kp.publicKey,
+        account: fundedSystemAccountInfo(),
       })),
       {
-        address: userAtaXPda,
-        info: {
+        pubkey: userAtaXPda,
+        account: {
           data: userAtaXData,
           executable: false,
           lamports: LAMPORTS_PER_SOL,
@@ -102,8 +92,8 @@ describe("deposit", () => {
         },
       },
       {
-        address: userAtaYPda,
-        info: {
+        pubkey: userAtaYPda,
+        account: {
           data: userAtaYData,
           executable: false,
           lamports: LAMPORTS_PER_SOL,
@@ -173,7 +163,7 @@ describe("deposit", () => {
     expect(Number(postUserAtaXBal)).toEqual(Number(initUserAtaBal) - amount);
     expect(Number(postUserAtaYBal)).toEqual(Number(initUserAtaBal) - amount);
 
-    const [mintLp] = getMintLpPdaAndBump(configPda);
+    const mintLp = getMintLpPda(configPda);
     const userAtaLpPda = getAssociatedTokenAddressSync(
       mintLp,
       user.publicKey,
@@ -218,11 +208,7 @@ describe("deposit", () => {
         .signers([user])
         .rpc();
     } catch (err) {
-      expect(err).toBeInstanceOf(AnchorError);
-
-      const { error } = err as AnchorError;
-      expect(error.errorCode.code).toEqual("PoolLocked");
-      expect(error.errorCode.number).toEqual(6001);
+      expectAnchorError(err, "PoolLocked");
     }
   });
 
@@ -245,11 +231,7 @@ describe("deposit", () => {
         .signers([user])
         .rpc();
     } catch (err) {
-      expect(err).toBeInstanceOf(AnchorError);
-
-      const { error } = err as AnchorError;
-      expect(error.errorCode.code).toEqual("InvalidAmount");
-      expect(error.errorCode.number).toEqual(6002);
+      expectAnchorError(err, "InvalidAmount");
     }
   });
 });

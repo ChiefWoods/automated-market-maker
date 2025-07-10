@@ -14,10 +14,10 @@ Constant product automated market maker for [Turbin3 Builders Cohort](https://tu
 ### Libraries
 
 - [@coral-xyz/anchor](https://www.anchor-lang.com/)
-- [@solana/web3.js](https://solana-labs.github.io/solana-web3.js/)
+- [@solana/web3.js](https://solana-foundation.github.io/solana-web3.js/)
 - [@solana/spl-token](https://solana-labs.github.io/solana-program-library/token/js/)
-- [solana-bankrun](https://kevinheavey.github.io/solana-bankrun/)
-- [anchor-bankrun](https://kevinheavey.github.io/solana-bankrun/)
+- [litesvm](https://github.com/LiteSVM/litesvm/tree/master/crates/node-litesvm)
+- [anchor-litesvm](https://github.com/LiteSVM/anchor-litesvm/)
 
 ### Crates
 

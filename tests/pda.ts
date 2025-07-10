@@ -2,16 +2,18 @@ import { PublicKey } from "@solana/web3.js";
 import { BN } from "@coral-xyz/anchor";
 import idl from "../target/idl/automated_market_maker.json";
 
-export function getConfigPdaAndBump(seed: BN) {
+const AMM_PROGRAM_ID = new PublicKey(idl.address);
+
+export function getConfigPda(seed: BN) {
   return PublicKey.findProgramAddressSync(
     [Buffer.from("config"), seed.toArrayLike(Buffer, "le", 8)],
-    new PublicKey(idl.address)
-  );
+    AMM_PROGRAM_ID,
+  )[0];
 }
 
-export function getMintLpPdaAndBump(configPda: PublicKey) {
+export function getMintLpPda(configPda: PublicKey) {
   return PublicKey.findProgramAddressSync(
     [Buffer.from("lp"), configPda.toBuffer()],
-    new PublicKey(idl.address)
-  );
+    AMM_PROGRAM_ID,
+  )[0];
 }

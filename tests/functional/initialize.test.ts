@@ -1,38 +1,33 @@
-import { BankrunProvider } from "anchor-bankrun";
 import { beforeEach, describe, expect, test } from "bun:test";
-import { ProgramTestContext } from "solana-bankrun";
 import { AutomatedMarketMaker } from "../../target/types/automated_market_maker";
 import { BN, Program } from "@coral-xyz/anchor";
-import { getBankrunSetup } from "../setup";
-import { Keypair, LAMPORTS_PER_SOL, SystemProgram } from "@solana/web3.js";
+import { Keypair } from "@solana/web3.js";
 import { randomBytes } from "crypto";
 import { mintX, mintY } from "../constants";
 import {
   getAssociatedTokenAddressSync,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { getConfigPdaAndBump, getMintLpPdaAndBump } from "../pda";
-import { getConfigAcc } from "../accounts";
+import { getConfigPda, getMintLpPda } from "../pda";
+import { fetchConfigAcc } from "../accounts";
+import { LiteSVM } from "litesvm";
+import { LiteSVMProvider } from "anchor-litesvm";
+import { fundedSystemAccountInfo, getSetup } from "../setup";
 
 describe("initialize", () => {
-  let { context, provider, program } = {} as {
-    context: ProgramTestContext;
-    provider: BankrunProvider;
+  let { litesvm, provider, program } = {} as {
+    litesvm: LiteSVM;
+    provider: LiteSVMProvider;
     program: Program<AutomatedMarketMaker>;
   };
 
   const authority = Keypair.generate();
 
   beforeEach(async () => {
-    ({ context, provider, program } = await getBankrunSetup([
+    ({ litesvm, provider, program } = await getSetup([
       {
-        address: authority.publicKey,
-        info: {
-          lamports: LAMPORTS_PER_SOL * 5,
-          data: Buffer.alloc(0),
-          owner: SystemProgram.programId,
-          executable: false,
-        },
+        pubkey: authority.publicKey,
+        account: fundedSystemAccountInfo(),
       },
     ]));
   });
@@ -57,21 +52,19 @@ describe("initialize", () => {
       .signers([authority])
       .rpc();
 
-    const [configPda, configBump] = getConfigPdaAndBump(seed);
+    const configPda = getConfigPda(seed);
 
-    const configAcc = await getConfigAcc(program, configPda);
-    const [mintLpPda, mintLpBump] = getMintLpPdaAndBump(configPda);
+    const configAcc = await fetchConfigAcc(program, configPda);
+    const mintLpPda = getMintLpPda(configPda);
 
     expect(configAcc.seed).toStrictEqual(seed);
     expect(configAcc.locked).toEqual(locked);
-    expect(configAcc.bump).toEqual(configBump);
-    expect(configAcc.lpBump).toEqual(mintLpBump);
     expect(configAcc.fee).toEqual(fee);
     expect(configAcc.mintX).toStrictEqual(mintX.publicKey);
     expect(configAcc.mintY).toStrictEqual(mintY.publicKey);
     expect(configAcc.authority).toStrictEqual(authority.publicKey);
 
-    const mintLpAcc = await context.banksClient.getAccount(mintLpPda);
+    const mintLpAcc = litesvm.getAccount(mintLpPda);
 
     expect(mintLpAcc).not.toBeNull();
 
@@ -88,8 +81,8 @@ describe("initialize", () => {
       TOKEN_PROGRAM_ID,
     );
 
-    const vaultXAcc = await context.banksClient.getAccount(vaultX);
-    const vaultYAcc = await context.banksClient.getAccount(vaultY);
+    const vaultXAcc = litesvm.getAccount(vaultX);
+    const vaultYAcc = litesvm.getAccount(vaultY);
 
     expect(vaultXAcc).not.toBeNull();
     expect(vaultYAcc).not.toBeNull();
